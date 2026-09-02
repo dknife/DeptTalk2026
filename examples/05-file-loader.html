@@ -69,10 +69,10 @@
   <!-- ── 파일 불러오기 인터페이스 ── -->
   <div id="loader">
     <h3>파일 불러오기</h3>
-    <label class="fileBtn">📂 FBX 파일 선택
-      <input type="file" id="fileInput" accept=".fbx" multiple />
+    <label class="fileBtn">📂 FBX / GLB 파일 선택
+      <input type="file" id="fileInput" accept=".fbx,.glb,.gltf" multiple />
     </label>
-    <div id="drop">여기로 드래그 &amp; 드롭<br /><span style="font-size:10px">캐릭터·애니메이션 자동 인식</span></div>
+    <div id="drop">여기로 드래그 &amp; 드롭<br /><span style="font-size:10px">FBX · GLB · 캐릭터/애니메이션 자동 인식</span></div>
     <div class="loaded">캐릭터: <span id="charName">없음</span></div>
     <div class="loaded">애니메이션: <span id="animCount">0</span>개</div>
   </div>
@@ -92,12 +92,13 @@
     </div>
   </div>
 
-  <div id="status">FBX 파일을 불러오세요. (또는 기본 모델이 자동 로드됩니다)</div>
+  <div id="status">FBX 또는 GLB 파일을 불러오세요. (또는 기본 모델이 자동 로드됩니다)</div>
 
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
     const status = document.getElementById('status');
 
@@ -122,6 +123,7 @@
 
     const clock = new THREE.Clock();
     const loader = new FBXLoader();
+    const gltfLoader = new GLTFLoader();
 
     // ── 상태 ──
     let character = null;             // 현재 캐릭터(Group)
@@ -132,42 +134,56 @@
     let isPlaying = true;
 
     // ─────────────────────────────────────────────
-    // 핵심 1) File(로컬 파일) → ArrayBuffer → FBXLoader.parse()
+    // 핵심 1) File(로컬 파일) → ArrayBuffer → 확장자에 맞는 로더로 parse()
     //   서버 URL이 아니라 사용자가 고른 파일이므로 load()가 아닌 parse()를 쓴다.
+    //   .fbx → FBXLoader,  .glb/.gltf → GLTFLoader
+    //   반환 형태를 { object, animations }로 통일해 이후 코드는 포맷을 몰라도 된다.
     // ─────────────────────────────────────────────
-    function readFbx(file) {
+    function readModel(file) {
+      const name = file.name.toLowerCase();
+      const isGltf = name.endsWith('.glb') || name.endsWith('.gltf');
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = (e) => {
-          try { resolve(loader.parse(e.target.result, '')); }
-          catch (err) { reject(err); }
-        };
         reader.onerror = reject;
+        reader.onload = (e) => {
+          try {
+            const data = e.target.result;
+            if (isGltf) {
+              // GLTFLoader.parse는 콜백 방식
+              gltfLoader.parse(data, '',
+                (gltf) => resolve({ object: gltf.scene, animations: gltf.animations || [] }),
+                reject);
+            } else {
+              const obj = loader.parse(data, '');
+              resolve({ object: obj, animations: obj.animations || [] });
+            }
+          } catch (err) { reject(err); }
+        };
         reader.readAsArrayBuffer(file);
       });
     }
 
     // 핵심 2) 파일 자동 분류: 스킨 메시가 있으면 '캐릭터', 아니면 '애니메이션'
-    function classify(obj) {
+    function classify(object, animations) {
       let hasSkinnedMesh = false;
-      obj.traverse((o) => { if (o.isSkinnedMesh) hasSkinnedMesh = true; });
+      object.traverse((o) => { if (o.isSkinnedMesh) hasSkinnedMesh = true; });
       if (hasSkinnedMesh) return 'character';
-      if (obj.animations && obj.animations.length) return 'animation';
+      if (animations && animations.length) return 'animation';
       return 'unknown';
     }
 
     async function handleFiles(fileList) {
-      const files = [...fileList].filter((f) => f.name.toLowerCase().endsWith('.fbx'));
+      const files = [...fileList].filter((f) => /\.(fbx|glb|gltf)$/i.test(f.name));
       for (const file of files) {
         try {
           status.textContent = `불러오는 중… ${file.name}`;
-          const obj = await readFbx(file);
-          const kind = classify(obj);
+          const { object, animations } = await readModel(file);
+          const kind = classify(object, animations);
 
           if (kind === 'character') {
-            setCharacter(obj, file.name);
+            setCharacter(object, file.name);
           } else if (kind === 'animation') {
-            addAnimation(file.name.replace(/\.fbx$/i, ''), obj.animations[0]);
+            addAnimation(file.name.replace(/\.(fbx|glb|gltf)$/i, ''), animations[0]);
           } else {
             status.textContent = `⚠ ${file.name}: 캐릭터도 애니메이션도 아닌 것 같아요.`;
           }
@@ -204,7 +220,7 @@
       document.getElementById('charName').textContent = name || '(이름없음)';
       status.textContent = loadedClips.length
         ? `캐릭터 적용 ✓ — 애니메이션 재생 중`
-        : `캐릭터 적용 ✓ — 이제 애니메이션 FBX를 불러오세요`;
+        : `캐릭터 적용 ✓ — 이제 애니메이션 FBX/GLB를 불러오세요`;
     }
 
     // ── 애니메이션 추가 ──
@@ -357,7 +373,7 @@
           undefined, () => {});
       },
       undefined,
-      () => { status.textContent = 'FBX 파일을 불러오세요. (버튼 또는 드래그 & 드롭)'; }
+      () => { status.textContent = 'FBX 또는 GLB 파일을 불러오세요. (버튼 또는 드래그 & 드롭)'; }
     );
   </script>
 </body>
