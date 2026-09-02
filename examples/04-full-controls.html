@@ -4,26 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>실습 4 · 제어 UI 완성</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body { margin: 0; overflow: hidden; font-family: sans-serif; background: #2b2b33; }
+    body { margin: 0; overflow: hidden; font-family: 'Inter Tight','Noto Sans KR',system-ui,-apple-system,sans-serif; background: #EDEDED; }
     #panel {
       position: absolute; left: 12px; bottom: 12px;
-      background: rgba(20,20,26,0.85); color: #eee; padding: 14px 16px;
-      border-radius: 10px; font-size: 13px; width: 260px; backdrop-filter: blur(4px);
+      background: #FFFFFF; color: #222; border: 1px solid #e5e5e5; padding: 14px 16px;
+      border-radius: 12px; font-size: 13px; width: 260px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04);
     }
-    #panel h3 { margin: 0 0 10px; font-size: 14px; }
+    #panel h3 { margin: 0 0 10px; font-size: 14px; color: #111; }
     .row { margin: 8px 0; }
     .clips button {
       margin: 2px 4px 2px 0; padding: 5px 10px; border: 0; border-radius: 6px;
-      background: #3a3a46; color: #eee; cursor: pointer; font-size: 12px;
+      background: #EDEDED; color: #222; cursor: pointer; font-size: 12px;
     }
-    .clips button.active { background: #4f9dde; color: #fff; }
-    label { display: block; margin-bottom: 3px; color: #aaa; }
-    input[type=range] { width: 100%; }
-    #playBtn { width: 100%; padding: 8px; border: 0; border-radius: 6px; cursor: pointer;
-      background: #4f9dde; color: #fff; font-size: 13px; font-weight: bold; }
-    #status { position: absolute; top: 10px; left: 12px; color: #fff;
-      background: rgba(0,0,0,0.5); padding: 6px 10px; border-radius: 6px; font-size: 12px; }
+    .clips button.active { background: #FA5D29; color: #fff; }
+    label { display: block; margin-bottom: 3px; color: #555; }
+    input[type=range] { width: 100%; accent-color: #FA5D29; }
+    #playBtn { width: 100%; padding: 8px; border: 0; border-radius: 8px; cursor: pointer;
+      background: #FA5D29; color: #fff; font-size: 13px; font-weight: bold; }
+    #playBtn:hover { background: #e24d1c; }
+    #status { position: absolute; top: 10px; left: 12px; color: #222;
+      background: #FFFFFF; border: 1px solid #e5e5e5; padding: 6px 10px; border-radius: 12px; font-size: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04); }
   </style>
   <script type="importmap">
   {
@@ -70,7 +76,7 @@
 
     // ── 기본 씬 ──
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x2b2b33);
+    scene.background = new THREE.Color(0xEDEDED);
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
     camera.position.set(0, 120, 320);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -81,7 +87,7 @@
     const dirLight = new THREE.DirectionalLight(0xffffff, 2);
     dirLight.position.set(100, 200, 100);
     scene.add(dirLight);
-    scene.add(new THREE.GridHelper(400, 20, 0x888888, 0x444444));
+    scene.add(new THREE.GridHelper(400, 20, 0xcccccc, 0xe0e0e0));
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 100, 0);
     controls.enableDamping = true;

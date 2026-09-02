@@ -4,49 +4,56 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>실습 5 · 파일 불러오기 인터페이스</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body { margin: 0; overflow: hidden; font-family: sans-serif; background: #2b2b33; }
+    body { margin: 0; overflow: hidden; font-family: 'Inter Tight','Noto Sans KR',system-ui,-apple-system,sans-serif; background: #EDEDED; }
 
     /* 왼쪽 상단: 파일 불러오기 UI */
     #loader {
       position: absolute; top: 12px; left: 12px; z-index: 10;
-      background: rgba(20,20,26,0.85); color: #eee; padding: 14px 16px;
-      border-radius: 10px; font-size: 13px; width: 260px; backdrop-filter: blur(4px);
+      background: #FFFFFF; color: #222; border: 1px solid #e5e5e5; padding: 14px 16px;
+      border-radius: 12px; font-size: 13px; width: 260px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04);
     }
-    #loader h3 { margin: 0 0 10px; font-size: 14px; }
+    #loader h3 { margin: 0 0 10px; font-size: 14px; color: #111; }
     .fileBtn {
       display: block; text-align: center; padding: 10px; margin-bottom: 8px;
-      background: #4f9dde; color: #fff; border-radius: 6px; cursor: pointer; font-weight: bold;
+      background: #FA5D29; color: #fff; border-radius: 8px; cursor: pointer; font-weight: bold;
     }
-    .fileBtn:hover { background: #63aef0; }
+    .fileBtn:hover { background: #e24d1c; }
     .fileBtn input { display: none; }
     #drop {
-      border: 2px dashed #556; border-radius: 8px; padding: 14px; text-align: center;
-      color: #99a; font-size: 12px; margin-bottom: 6px; transition: .15s;
+      border: 2px dashed #cfcfcf; border-radius: 8px; padding: 14px; text-align: center;
+      color: #888; font-size: 12px; margin-bottom: 6px; transition: .15s;
     }
-    #drop.over { border-color: #4f9dde; color: #cfe6ff; background: rgba(79,157,222,0.12); }
-    .loaded { font-size: 11px; color: #8ad0ff; margin-top: 4px; word-break: break-all; }
+    #drop.over { border-color: #FA5D29; color: #FA5D29; background: rgba(250,93,41,0.08); }
+    .loaded { font-size: 11px; color: #555; margin-top: 4px; word-break: break-all; }
 
     /* 왼쪽 하단: 애니메이션 제어 (실습 4와 동일 구조) */
     #panel {
       position: absolute; left: 12px; bottom: 12px; z-index: 10;
-      background: rgba(20,20,26,0.85); color: #eee; padding: 14px 16px;
-      border-radius: 10px; font-size: 13px; width: 260px; backdrop-filter: blur(4px);
+      background: #FFFFFF; color: #222; border: 1px solid #e5e5e5; padding: 14px 16px;
+      border-radius: 12px; font-size: 13px; width: 260px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04);
     }
-    #panel h3 { margin: 0 0 10px; font-size: 14px; }
+    #panel h3 { margin: 0 0 10px; font-size: 14px; color: #111; }
     .row { margin: 8px 0; }
     .clips button {
       margin: 2px 4px 2px 0; padding: 5px 10px; border: 0; border-radius: 6px;
-      background: #3a3a46; color: #eee; cursor: pointer; font-size: 12px;
+      background: #EDEDED; color: #222; cursor: pointer; font-size: 12px;
     }
-    .clips button.active { background: #4f9dde; color: #fff; }
-    label { display: block; margin-bottom: 3px; color: #aaa; }
-    input[type=range] { width: 100%; }
-    #playBtn { width: 100%; padding: 8px; border: 0; border-radius: 6px; cursor: pointer;
-      background: #4f9dde; color: #fff; font-size: 13px; font-weight: bold; }
+    .clips button.active { background: #FA5D29; color: #fff; }
+    label { display: block; margin-bottom: 3px; color: #555; }
+    input[type=range] { width: 100%; accent-color: #FA5D29; }
+    #playBtn { width: 100%; padding: 8px; border: 0; border-radius: 8px; cursor: pointer;
+      background: #FA5D29; color: #fff; font-size: 13px; font-weight: bold; }
+    #playBtn:hover { background: #e24d1c; }
     #status {
-      position: absolute; top: 12px; left: 288px; color: #fff;
-      background: rgba(0,0,0,0.5); padding: 6px 10px; border-radius: 6px; font-size: 12px; max-width: 40vw;
+      position: absolute; top: 12px; left: 288px; color: #222;
+      background: #FFFFFF; border: 1px solid #e5e5e5; padding: 6px 10px; border-radius: 12px; font-size: 12px; max-width: 40vw;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04);
     }
   </style>
   <script type="importmap">
@@ -73,7 +80,7 @@
   <!-- ── 애니메이션 제어 ── -->
   <div id="panel">
     <h3>애니메이션 제어</h3>
-    <div class="row clips" id="clips"><span class="muted" style="color:#889;font-size:11px">애니메이션 파일을 불러오세요</span></div>
+    <div class="row clips" id="clips"><span class="muted" style="color:#888;font-size:11px">애니메이션 파일을 불러오세요</span></div>
     <div class="row"><button id="playBtn">⏸ 일시정지</button></div>
     <div class="row">
       <label>재생 속도 <span id="speedVal">1.0×</span></label>
@@ -96,7 +103,7 @@
 
     // ── 기본 씬 ──
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x2b2b33);
+    scene.background = new THREE.Color(0xEDEDED);
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 5000);
     camera.position.set(0, 120, 320);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -107,7 +114,7 @@
     const dirLight = new THREE.DirectionalLight(0xffffff, 2);
     dirLight.position.set(100, 200, 100);
     scene.add(dirLight);
-    const grid = new THREE.GridHelper(400, 20, 0x888888, 0x444444);
+    const grid = new THREE.GridHelper(400, 20, 0xcccccc, 0xe0e0e0);
     scene.add(grid);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 100, 0);
@@ -258,7 +265,7 @@
     function renderClipButtons() {
       clipsEl.innerHTML = '';
       if (!actions.length) {
-        clipsEl.innerHTML = '<span style="color:#889;font-size:11px">애니메이션 파일을 불러오세요</span>';
+        clipsEl.innerHTML = '<span style="color:#888;font-size:11px">애니메이션 파일을 불러오세요</span>';
         return;
       }
       loadedClips.forEach((c, i) => {

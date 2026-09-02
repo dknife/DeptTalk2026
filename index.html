@@ -7,33 +7,67 @@
 
   <!-- reveal.js (CDN) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/night.css" id="theme" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" id="theme" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css" />
 
+  <!-- Google Fonts: dknife.github.io 와 동일 (Inter Tight + Noto Sans KR) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
   <style>
-    :root { --r-main-font: 'Malgun Gothic','맑은 고딕',sans-serif; --r-heading-font: 'Malgun Gothic',sans-serif; }
-    .reveal { font-size: 30px; }
-    .reveal h1 { font-size: 1.7em; }
-    .reveal h2 { font-size: 1.35em; color: #6cc4ff; }
-    .reveal h3 { color: #8ad0ff; }
-    .reveal section img { border: 0; box-shadow: none; }
-    .reveal table { font-size: 0.8em; }
-    .reveal table th { color: #6cc4ff; }
-    .reveal pre { width: 100%; font-size: 0.52em; box-shadow: none; }
-    .reveal pre code { max-height: 460px; border-radius: 8px; padding: 14px; }
-    .lead { color: #ffd479; font-weight: bold; }
-    .muted { color: #9aa; font-size: 0.8em; }
-    .tag { display:inline-block; background:#245; color:#7fd; padding:2px 10px; border-radius:12px; font-size:0.6em; vertical-align:middle; }
-    .box { background: rgba(255,255,255,0.06); border-left: 4px solid #6cc4ff; padding: 12px 18px; border-radius: 6px; text-align:left; }
-    .box.warn { border-left-color:#ff9d5c; }
-    .box.ai   { border-left-color:#ffd479; }
-    .check { list-style:none; text-align:left; }
-    .check li::before { content:"☐ "; color:#6cc4ff; }
-    .prompt { font-style: italic; color:#ffe9b0; text-align:left; }
-    .reveal .small { font-size: 0.75em; }
+    :root {
+      --r-main-font: 'Inter Tight','Noto Sans KR',system-ui,-apple-system,sans-serif;
+      --r-heading-font: 'Inter Tight','Noto Sans KR',sans-serif;
+      --r-background-color: #F8F8F8;
+      --accent:#FA5D29; --accent-soft:rgba(250,93,41,0.08); --cyan:#0693E3;
+      --text:#222222; --muted:#888888; --border:#e5e5e5;
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04);
+    }
+    .reveal-viewport { background: #F8F8F8; }
+    .reveal { font-size: 30px; color: var(--text); }
+    .reveal h1 { font-size: 1.85em; font-weight: 800; color:#111; letter-spacing:-0.5px; text-transform:none; }
+    .reveal h2 { font-size: 1.4em; font-weight: 800; color:#111; letter-spacing:-0.5px; text-transform:none; }
+    .reveal h2::after { content:""; display:block; width:56px; height:4px; background:var(--accent); border-radius:2px; margin:16px auto 4px; }
+    .reveal h3 { font-size: 1.12em; font-weight: 700; color:#111; text-transform:none; }
+    .reveal section img { border:0; box-shadow:none; }
+    .reveal a { color: var(--accent); text-decoration:none; }
+    .reveal a:hover { text-decoration:underline; }
+
+    .reveal table { font-size:0.78em; border-collapse:collapse; margin:0.5em auto; box-shadow:var(--shadow-md); border-radius:10px; overflow:hidden; }
+    .reveal table th, .reveal table td { border:1px solid var(--border); padding:8px 13px; }
+    .reveal table th { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
+    .reveal table tbody tr:nth-child(even) td { background:#fafafa; }
+
+    .reveal pre { width:100%; font-size:0.5em; box-shadow:none; }
+    .reveal pre code { max-height:460px; border-radius:10px; padding:16px; box-shadow:var(--shadow-md); }
+
+    .lead { color: var(--accent); font-weight:700; }
+    .muted { color: var(--muted); font-size:0.8em; }
+    .reveal .small { font-size:0.75em; }
+    .tag { display:inline-block; background:var(--accent-soft); color:var(--accent); padding:3px 12px; border-radius:999px; font-size:0.6em; font-weight:600; vertical-align:middle; }
+    .step-num { font-size:0.6em; color:var(--accent); letter-spacing:3px; font-weight:600; }
+
+    .box { background:#fff; border:1px solid var(--border); border-left:4px solid var(--accent); padding:14px 18px; border-radius:10px; text-align:left; box-shadow:var(--shadow-md); }
+    .box.ai { border-left-color:var(--cyan); }
+    .box.warn { border-left-color:var(--accent); background:var(--accent-soft); }
+
+    .check { list-style:none; text-align:left; padding-left:0.2em; }
+    .check li::before { content:"☐ "; color:var(--accent); font-weight:700; }
+    .prompt { font-style:italic; color:#444; text-align:left; }
     .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-    a { color:#7fd !important; }
-    .step-num { font-size:0.6em; color:#6cc4ff; letter-spacing:3px; }
+    .reveal hr { border:0; border-top:1px solid var(--border); }
+
+    /* 다크 divider 슬라이드 (표지·섹션 표지·감사) */
+    .reveal .has-dark-background { color:#eee; }
+    .reveal .has-dark-background h1,
+    .reveal .has-dark-background h2,
+    .reveal .has-dark-background h3 { color:#fff; }
+    .reveal .has-dark-background .muted { color:#aaa; }
+    .reveal .has-dark-background .lead { color:#ff7a4d; }
+    .reveal .has-dark-background a { color:#ff9d75; }
+    .reveal .has-dark-background .box { background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.16); color:#eee; }
+    .reveal .has-dark-background .prompt { color:#ffe0cf; }
   </style>
 </head>
 <body>
@@ -41,7 +75,7 @@
 <div class="slides">
 
 <!-- ========== 표지 ========== -->
-<section data-background-gradient="linear-gradient(135deg,#1a2a3a,#0d1520)">
+<section data-background-color="#141414">
   <p class="lead" style="font-size:0.9em; letter-spacing:1px; margin-bottom:6px">2026년 게임그래픽학과 교수 AI 역량 교육</p>
   <h1>AI로 만드는<br />FBX 3D 웹서비스</h1>
   <p class="muted" style="font-size:0.85em">캐릭터·애니메이션을 WebGL로 재생·제어하기 · 순수 Three.js + GitHub Pages</p>
@@ -173,7 +207,7 @@ npx serve .
 
 <!-- ========== 사전 준비: 도구 설치 ========== -->
 <section>
-  <section data-background-gradient="linear-gradient(135deg,#16232e,#0a1118)">
+  <section data-background-color="#141414">
     <h2>사전 준비 · 도구 설치</h2>
     <p class="lead">AI로 개발하고 GitHub로 배포하기 위한 준비</p>
     <p class="muted small">Claude Code · GitHub 계정 · Node.js · Git</p>
@@ -259,7 +293,7 @@ gh auth login          # 브라우저로 로그인 → git 자격증명 자동 �
 </section>
 
 <!-- ========== 단계 로드맵 ========== -->
-<section data-background-gradient="linear-gradient(135deg,#12202e,#0a1018)">
+<section>
   <h2>구축 로드맵 (4단계)</h2>
   <p class="small">각 단계 = ① 목표 → ② AI 프롬프트 → ③ 검증 → ④ 오류 대응</p>
   <table>
@@ -465,7 +499,7 @@ reader.readAsArrayBuffer(file);
 
 <!-- ========== GLB 변환 ========== -->
 <section>
-  <section data-background-gradient="linear-gradient(135deg,#2e2416,#180f08)">
+  <section>
     <h2>왜 glTF/GLB로 변환하나</h2>
     <p class="lead">FBX는 웹 배포에 무겁다</p>
     <p class="small muted">이 강의에서 실제로 변환한 결과 ↓</p>
@@ -525,7 +559,7 @@ loader.load('../glb/character.glb', (gltf) => {
 
 <!-- ========== 배포 ========== -->
 <section>
-  <section data-background-gradient="linear-gradient(135deg,#1a2e1a,#0a180a)">
+  <section data-background-color="#141414">
     <h2>GitHub으로 공개하기</h2>
     <p class="lead">서버도, 비용도 없이 인터넷에 서비스</p>
     <p class="muted small">이 강의 저장소: <a href="https://github.com/dknife/DeptTalk2026" target="_blank">github.com/dknife/DeptTalk2026</a></p>
@@ -600,7 +634,7 @@ git push -u origin main
 
 <!-- ========== 재현 가이드: 실제 지시 순서 ========== -->
 <section>
-  <section data-background-gradient="linear-gradient(135deg,#20182e,#0d0818)">
+  <section data-background-color="#141414">
     <h2>직접 따라 만들기</h2>
     <p class="lead">AI에게 준 "지시 순서" 그대로 재현하기</p>
     <p class="small muted">이 강의 자료·서비스·배포는 코드를 직접 타이핑하지 않고,<br />
@@ -703,7 +737,7 @@ git push -u origin main          # → Pages 자동 빌드 → 사이트 공개
     </ul>
     <p class="lead" style="margin-top:20px">각 과제를 "말로 표현 → AI에 요청 → 검증" 사이클로!</p>
   </section>
-  <section data-background-gradient="linear-gradient(135deg,#1a2a3a,#0d1520)">
+  <section data-background-color="#141414">
     <h1>감사합니다</h1>
     <p class="muted">실습: <a href="./examples/01-basic-scene.html" target="_blank">01</a> ·
       <a href="./examples/02-load-character.html" target="_blank">02</a> ·
