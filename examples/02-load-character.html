@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>실습 2 · 캐릭터 FBX 불러오기</title>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    #info {
+      position: absolute; top: 10px; left: 10px; color: #fff;
+      background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 6px;
+      font-size: 13px; line-height: 1.5;
+    }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="info">실습 2 · 캐릭터 FBX 불러오기<br /><span id="status">로딩 중…</span></div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    // [추가] FBX 파일을 읽는 로더
+    import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+    const status = document.getElementById('status');
+
+    // ── 기본 씬 (실습 1과 동일) ──
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x2b2b33);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 120, 320);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+    dirLight.position.set(100, 200, 100);
+    scene.add(dirLight);
+    scene.add(new THREE.GridHelper(400, 20, 0x888888, 0x444444));
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 100, 0);
+    controls.enableDamping = true;
+
+    // ─────────────────────────────────────────────
+    // FBX 캐릭터 불러오기
+    // FBXLoader.load(경로, onLoad, onProgress, onError)
+    //  - onLoad: 성공 시, 파싱된 결과(THREE.Group)를 넘겨준다.
+    //  - 이 Group 안에 메시(피부)와 스켈레톤(뼈대)이 들어 있다.
+    // ─────────────────────────────────────────────
+    const loader = new FBXLoader();
+    loader.load(
+      '../fbx/character.fbx',
+      (character) => {
+        // Mixamo 등에서 받은 모델은 크기가 크므로 필요 시 스케일 조정
+        // character.scale.setScalar(1);
+
+        scene.add(character);
+        status.textContent = '캐릭터 로드 완료 ✓ (아직 T자 정지 자세 — 애니메이션은 실습 3에서)';
+
+        // 참고: 뼈 이름을 콘솔에 출력해 두면, 애니메이션 FBX와
+        // 뼈 이름이 맞는지 확인할 때 유용하다. (F12 → Console)
+        character.traverse((obj) => {
+          if (obj.isBone) console.log('bone:', obj.name);
+        });
+      },
+      (xhr) => {
+        if (xhr.total) status.textContent = `로딩 중… ${Math.round((xhr.loaded / xhr.total) * 100)}%`;
+      },
+      (err) => {
+        console.error(err);
+        status.textContent = '⚠ 로드 실패: ../fbx/character.fbx 경로와 로컬 서버 실행을 확인하세요.';
+      }
+    );
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>

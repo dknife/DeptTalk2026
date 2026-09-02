@@ -1,0 +1,12 @@
+# 의존성/빌드 산출물
+node_modules/
+dist/
+
+# OS·편집기 부산물
+Thumbs.db
+.DS_Store
+*.log
+.vscode/
+
+# 메모리(로컬 전용)
+memory/

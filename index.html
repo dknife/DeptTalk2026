@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI로 FBX 3D 웹서비스 만들기 · 강의 프리젠테이션</title>
+
+  <!-- reveal.js (CDN) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/night.css" id="theme" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css" />
+
+  <style>
+    :root { --r-main-font: 'Malgun Gothic','맑은 고딕',sans-serif; --r-heading-font: 'Malgun Gothic',sans-serif; }
+    .reveal { font-size: 30px; }
+    .reveal h1 { font-size: 1.7em; }
+    .reveal h2 { font-size: 1.35em; color: #6cc4ff; }
+    .reveal h3 { color: #8ad0ff; }
+    .reveal section img { border: 0; box-shadow: none; }
+    .reveal table { font-size: 0.8em; }
+    .reveal table th { color: #6cc4ff; }
+    .reveal pre { width: 100%; font-size: 0.52em; box-shadow: none; }
+    .reveal pre code { max-height: 460px; border-radius: 8px; padding: 14px; }
+    .lead { color: #ffd479; font-weight: bold; }
+    .muted { color: #9aa; font-size: 0.8em; }
+    .tag { display:inline-block; background:#245; color:#7fd; padding:2px 10px; border-radius:12px; font-size:0.6em; vertical-align:middle; }
+    .box { background: rgba(255,255,255,0.06); border-left: 4px solid #6cc4ff; padding: 12px 18px; border-radius: 6px; text-align:left; }
+    .box.warn { border-left-color:#ff9d5c; }
+    .box.ai   { border-left-color:#ffd479; }
+    .check { list-style:none; text-align:left; }
+    .check li::before { content:"☐ "; color:#6cc4ff; }
+    .prompt { font-style: italic; color:#ffe9b0; text-align:left; }
+    .reveal .small { font-size: 0.75em; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    a { color:#7fd !important; }
+    .step-num { font-size:0.6em; color:#6cc4ff; letter-spacing:3px; }
+  </style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ========== 표지 ========== -->
+<section data-background-gradient="linear-gradient(135deg,#1a2a3a,#0d1520)">
+  <h1>AI로 만드는<br />FBX 3D 웹서비스</h1>
+  <p class="lead">캐릭터와 애니메이션을 WebGL로 재생·제어하기</p>
+  <p class="muted">인공지능 활용 역량 교육 · 순수 Three.js + GitHub Pages</p>
+  <p class="muted small">← → 방향키 또는 Space 로 넘기세요 · ESC: 전체 슬라이드 보기</p>
+</section>
+
+<!-- ========== 강의 목표 ========== -->
+<section>
+  <h2>이 강의의 목표</h2>
+  <p>코딩 전문가가 아니어도,</p>
+  <p class="lead">"AI에게 올바르게 요청하고, 그 결과를 검증·수정하는 능력"</p>
+  <p>만으로 실제 동작하는 웹서비스를 <strong>처음부터 배포까지</strong> 완성한다.</p>
+  <hr />
+  <p class="small muted">소재: 3D 캐릭터·애니메이션 FBX → 브라우저(WebGL) 재생/제어<br />
+  플랫폼: GitHub / GitHub Pages (서버·비용 불필요)</p>
+</section>
+
+<!-- ========== 무엇을 만드나 ========== -->
+<section>
+  <h2>무엇을 만드나</h2>
+  <div class="grid2">
+    <div class="box">
+      <p>✅ 마우스로 시점 회전·확대</p>
+      <p>✅ 애니메이션 재생 / 일시정지</p>
+      <p>✅ 여러 동작 부드럽게 전환</p>
+      <p>✅ 재생 속도 · 타임라인 제어</p>
+    </div>
+    <div>
+      <p class="small">완성 실습으로 바로 가기 ↓</p>
+      <p><a href="./examples/04-full-controls.html" target="_blank">▶ examples/04-full-controls.html</a></p>
+      <p class="muted small">(fbx 폴더에 모델을 넣고 로컬 서버로 실행)</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 핵심 관점: AI 활용 역량 ========== -->
+<section>
+  <section>
+    <h2>핵심 관점: "AI 활용 역량"이란</h2>
+    <p>이 강의는 <span class="lead">Three.js 문법 암기가 아니다.</span></p>
+    <p>다음 4가지 역량을 기르는 것이 목표.</p>
+    <p class="muted small">↓ 방향키로 각 역량 자세히 보기</p>
+  </section>
+  <section>
+    <table>
+      <tr><th>역량</th><th>내용</th><th>이 강의에서</th></tr>
+      <tr><td>① 분해</td><td>큰 목표를 작은 단위로 쪼갬</td><td>서비스를 4단계로 분해</td></tr>
+      <tr><td>② 요청</td><td>맥락·제약과 함께 명확히 요청</td><td>단계별 "AI 프롬프트"</td></tr>
+      <tr><td>③ 검증</td><td>결과가 맞는지 스스로 확인</td><td>단계별 "체크리스트"</td></tr>
+      <tr><td>④ 수정</td><td>오류를 근거로 다시 요청</td><td>단계별 "디버깅 프롬프트"</td></tr>
+    </table>
+    <div class="box ai small" style="margin-top:20px">
+      💡 AI는 코드를 대신 써 준다. 하지만 <strong>"무엇을 만들지 쪼개고, 맞는지 판단하는 것"</strong>은 사람의 몫.
+      이 판단력이 곧 AI 활용 역량이다.
+    </div>
+  </section>
+</section>
+
+<!-- ========== 배경지식 ========== -->
+<section>
+  <section>
+    <h2>배경 지식 (역할만 이해하면 됨)</h2>
+    <table>
+      <tr><th>용어</th><th>역할</th></tr>
+      <tr><td>WebGL</td><td>브라우저가 3D를 그리는 기술 (직접 다루긴 어려움)</td></tr>
+      <tr><td class="lead">Three.js</td><td>WebGL을 쉽게 쓰는 라이브러리 — <strong>우리가 사용</strong></td></tr>
+      <tr><td>FBX</td><td>3D 캐릭터·애니메이션을 담는 파일 형식</td></tr>
+    </table>
+  </section>
+  <section>
+    <h3>왜 캐릭터 FBX와 애니메이션 FBX가 나뉘나?</h3>
+    <div class="grid2">
+      <div class="box"><strong>character.fbx</strong><br /><span class="small">겉모습(메시=피부) + 뼈대(스켈레톤). 움직임은 없음.</span></div>
+      <div class="box"><strong>walk_ani.fbx</strong><br /><span class="small">뼈를 시간에 따라 움직이는 데이터만. 겉모습 없음.</span></div>
+    </div>
+    <p class="lead" style="margin-top:24px">캐릭터 하나에 걷기·뛰기·점프를 <u>갈아 끼우기</u> 위해!</p>
+    <p class="muted small">동작 데이터를 캐릭터와 분리해 재사용 — 게임 제작의 표준 방식</p>
+  </section>
+  <section>
+    <h3>3D 화면을 그리는 요소 (비유)</h3>
+    <table>
+      <tr><th>요소</th><th>역할</th><th>비유</th></tr>
+      <tr><td>Scene</td><td>물체가 놓이는 공간</td><td>무대</td></tr>
+      <tr><td>Camera</td><td>어디서 바라볼지</td><td>눈</td></tr>
+      <tr><td>Renderer</td><td>실제로 그림</td><td>붓</td></tr>
+      <tr><td>Light</td><td>물체가 보이게 함</td><td>조명</td></tr>
+      <tr><td class="lead">AnimationMixer</td><td>애니메이션을 진행시킴</td><td>재생기</td></tr>
+    </table>
+  </section>
+</section>
+
+<!-- ========== 개발 준비 ========== -->
+<section>
+  <section>
+    <h2>개발 준비</h2>
+    <div class="grid2">
+      <div class="box">
+        <strong>필요한 것</strong>
+        <p class="small">· 크롬/엣지 브라우저<br />· 코드 편집기(VS Code)<br />· GitHub 계정(무료)<br />· (선택) Python 또는 Node.js</p>
+      </div>
+      <div class="box warn">
+        <strong>왜 로컬 서버?</strong>
+        <p class="small">FBX 로딩은 보안상 <code>file://</code>(더블클릭)에서 막힘.
+        <code>http://localhost</code> 로 접속해야 함.</p>
+      </div>
+    </div>
+    <pre><code data-trim class="language-powershell">
+# 프로젝트 폴더에서 (택1)
+python -m http.server 8000
+npx serve .
+    </code></pre>
+  </section>
+  <section>
+    <h3>모델 파일 준비</h3>
+    <p><span class="tag">fbx 폴더</span> 안에 아래 파일이 있어야 함</p>
+    <div class="box">
+      <p class="small">📁 <code>fbx/character.fbx</code> — 캐릭터(메시+스켈레톤)</p>
+      <p class="small">📁 <code>fbx/walk_ani.fbx</code> — 걷기 동작(Skin 없음)</p>
+    </div>
+    <p class="small" style="margin-top:16px"><a href="https://www.mixamo.com" target="_blank">Mixamo</a>에서 무료로:
+    캐릭터는 <strong>T-pose</strong>, 애니메이션은 <strong>Without Skin</strong> 으로 다운로드.</p>
+    <p class="muted small">두 FBX의 <u>뼈 이름 규칙이 같아야</u> 애니메이션이 정상 적용됨 (Mixamo끼리는 동일).</p>
+  </section>
+</section>
+
+<!-- ========== 단계 로드맵 ========== -->
+<section data-background-gradient="linear-gradient(135deg,#12202e,#0a1018)">
+  <h2>구축 로드맵 (4단계)</h2>
+  <p class="small">각 단계 = ① 목표 → ② AI 프롬프트 → ③ 검증 → ④ 오류 대응</p>
+  <table>
+    <tr><th>단계</th><th>내용</th><th>실습 파일</th></tr>
+    <tr><td>1</td><td>3D 기본 씬</td><td><a href="./examples/01-basic-scene.html" target="_blank">01</a></td></tr>
+    <tr><td>2</td><td>캐릭터 FBX 로드</td><td><a href="./examples/02-load-character.html" target="_blank">02</a></td></tr>
+    <tr><td>3</td><td>애니메이션 입히기</td><td><a href="./examples/03-apply-animation.html" target="_blank">03</a></td></tr>
+    <tr><td>4</td><td>제어 UI 완성</td><td><a href="./examples/04-full-controls.html" target="_blank">04</a></td></tr>
+    <tr><td>5</td><td>파일 불러오기 UI</td><td><a href="./examples/05-file-loader.html" target="_blank">05</a></td></tr>
+  </table>
+</section>
+
+<!-- ========== 단계 1 ========== -->
+<section>
+  <section>
+    <p class="step-num">STEP 01</p>
+    <h2>3D 기본 씬 만들기</h2>
+    <p>마우스로 돌려볼 수 있는 3D 공간(무대·눈·붓·빛)을 띄운다.</p>
+    <p class="muted small">↓ 프롬프트 · 검증 · 오류</p>
+  </section>
+  <section>
+    <h3>② AI 프롬프트 예시</h3>
+    <div class="box ai prompt small">
+      "순수 Three.js를 CDN(importmap)으로 불러와, 빌드 도구 없이 HTML 파일 하나로 동작하는 기본 3D 씬을 만들어줘.
+      Scene, PerspectiveCamera, WebGLRenderer, 조명, 바닥 그리드, 마우스로 회전/줌 되는 OrbitControls를 포함하고 한국어 주석을 달아줘."
+    </div>
+    <h3 class="small">③ 검증 체크리스트</h3>
+    <ul class="check small">
+      <li>회색 배경과 바닥 격자가 보인다</li>
+      <li>드래그로 회전, 휠로 확대·축소된다</li>
+      <li>F12 → Console에 빨간 오류가 없다</li>
+    </ul>
+  </section>
+  <section>
+    <h3>④ 자주 나는 오류</h3>
+    <div class="box warn small">
+      <p>· <strong>화면이 검다</strong> → 조명 없음 / 카메라가 물체를 안 봄</p>
+      <p>· <strong>import 오류</strong> → <code>type="module"</code> · importmap 누락</p>
+    </div>
+    <p class="small" style="margin-top:16px">디버깅 프롬프트:</p>
+    <p class="prompt small">"화면이 까맣게 나와. 카메라 위치와 조명 설정을 점검해줘."</p>
+    <p style="margin-top:16px"><a href="./examples/01-basic-scene.html" target="_blank">▶ 실습 1 실행</a></p>
+  </section>
+</section>
+
+<!-- ========== 단계 2 ========== -->
+<section>
+  <section>
+    <p class="step-num">STEP 02</p>
+    <h2>캐릭터 FBX 로드</h2>
+    <p>씬에 캐릭터를 세운다 (아직 T자 정지 자세).</p>
+  </section>
+  <section>
+    <h3>핵심 코드</h3>
+    <pre><code data-trim data-noescape class="language-javascript">
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+const loader = new FBXLoader();
+loader.load('../fbx/character.fbx', (character) => {
+  scene.add(character);              // 씬에 추가
+  character.traverse((o) => {        // 뼈 이름 확인 (단계 3에서 중요)
+    if (o.isBone) console.log('bone:', o.name);
+  });
+});
+    </code></pre>
+    <p class="prompt small">"이 코드에 FBXLoader를 추가해 ../fbx/character.fbx 를 불러오고 씬에 추가해줘. 진행률·실패 메시지를 표시하고 뼈 이름을 콘솔에 출력해줘."</p>
+  </section>
+  <section>
+    <h3>③ 검증 / ④ 오류</h3>
+    <ul class="check small">
+      <li>캐릭터가 화면에 보인다</li>
+      <li>Console에 <code>bone: mixamorig...</code> 목록이 찍힌다</li>
+    </ul>
+    <div class="box warn small" style="margin-top:16px">
+      <p>· <strong>안 보임(너무 크거나 작음)</strong> → 스케일/카메라 조정</p>
+      <p>· <strong>로드 실패</strong> → 경로 오타 / 로컬 서버 미실행</p>
+    </div>
+    <p><a href="./examples/02-load-character.html" target="_blank">▶ 실습 2 실행</a></p>
+  </section>
+</section>
+
+<!-- ========== 단계 3 ========== -->
+<section>
+  <section>
+    <p class="step-num">STEP 03</p>
+    <h2>애니메이션 입히기 <span class="tag">서비스의 심장</span></h2>
+    <p>별도의 <code>walk_ani.fbx</code>에서 동작만 꺼내 캐릭터에 적용·재생.</p>
+  </section>
+  <section>
+    <h3>핵심 원리</h3>
+    <ol class="small" style="text-align:left">
+      <li><code>AnimationMixer(character)</code> — 캐릭터 전용 재생기 생성</li>
+      <li><code>walk_ani.fbx</code>의 <code>animations[0]</code> = 동작 데이터(Clip)</li>
+      <li><code>mixer.clipAction(clip).play()</code> — 연결 후 재생</li>
+      <li>매 프레임 <code>mixer.update(delta)</code> — 시간 흘려보내기</li>
+      <li class="lead">전제: 두 FBX의 뼈 이름이 같아야 함</li>
+    </ol>
+  </section>
+  <section>
+    <h3>핵심 코드</h3>
+    <pre><code data-trim data-noescape class="language-javascript">
+const clock = new THREE.Clock();
+let mixer;
+
+loader.load('../fbx/character.fbx', (character) => {
+  scene.add(character);
+  mixer = new THREE.AnimationMixer(character);      // ① 재생기
+
+  loader.load('../fbx/walk_ani.fbx', (anim) => {
+    const clip = anim.animations[0];                // ② 동작 데이터
+    mixer.clipAction(clip).play();                  // ③ 재생
+  });
+});
+
+// 렌더 루프
+function animate() {
+  requestAnimationFrame(animate);
+  if (mixer) mixer.update(clock.getDelta());        // ④ 진행
+  renderer.render(scene, camera);
+}
+    </code></pre>
+  </section>
+  <section>
+    <h3>③ 검증 / ④ 오류</h3>
+    <ul class="check small">
+      <li>캐릭터가 T자에서 벗어나 실제로 움직인다</li>
+      <li>동작이 찌그러지지 않는다 (찌그러지면 뼈 이름 불일치)</li>
+    </ul>
+    <div class="box warn small" style="margin-top:12px">
+      <p>· <strong>안 움직임</strong> → <code>mixer.update()</code> 누락 / <code>play()</code> 누락</p>
+      <p>· <strong>몸이 뒤틀림</strong> → 두 FBX 뼈 이름 불일치</p>
+    </div>
+    <p class="prompt small">"애니메이션을 입히니 캐릭터가 뒤틀려. 두 FBX의 뼈 이름이 다를 때 맞추는(리타게팅) 방법을 알려줘."</p>
+    <p><a href="./examples/03-apply-animation.html" target="_blank">▶ 실습 3 실행</a></p>
+  </section>
+</section>
+
+<!-- ========== 단계 4 ========== -->
+<section>
+  <section>
+    <p class="step-num">STEP 04</p>
+    <h2>제어 인터페이스 완성</h2>
+    <p>재생/정지 · 애니메이션 전환(크로스페이드) · 속도 · 타임라인.</p>
+  </section>
+  <section>
+    <h3>② AI 프롬프트 예시</h3>
+    <div class="box ai prompt small">
+      "여러 애니메이션 FBX를 배열로 관리하며 제어 패널을 만들어줘.
+      ① 애니메이션마다 전환 버튼(0.4초 크로스페이드), ② 재생/일시정지 토글,
+      ③ 속도 슬라이더(0~2배), ④ 재생 위치를 보여주고 드래그로 이동하는 타임라인.
+      외부 UI 라이브러리 없이 순수 HTML/CSS로."
+    </div>
+    <pre><code data-trim data-noescape class="language-javascript">
+// 부드러운 전환 — 이전 동작에서 새 동작으로 0.4초 크로스페이드
+next.reset().play();
+if (current) current.crossFadeTo(next, 0.4, false);
+current = next;
+    </code></pre>
+  </section>
+  <section>
+    <h3>③ 검증 / ④ 오류</h3>
+    <ul class="check small">
+      <li>버튼을 누르면 동작이 끊김 없이 바뀐다</li>
+      <li>일시정지/재생이 이어서 동작한다</li>
+      <li>속도 슬라이더가 재생에 반영된다</li>
+      <li>타임라인 드래그로 이동, 재생 중엔 자동으로 움직인다</li>
+    </ul>
+    <div class="box warn small" style="margin-top:10px">
+      <p>· <strong>전환이 뚝뚝 끊김</strong> → crossFade 대신 stop/play만 함</p>
+      <p>· <strong>타임라인 충돌</strong> → 슬라이더 잡는 동안 update 멈추기</p>
+    </div>
+    <p><a href="./examples/04-full-controls.html" target="_blank">▶ 실습 4 실행 (완성본)</a></p>
+  </section>
+</section>
+
+<!-- ========== 단계 5 ========== -->
+<section>
+  <section>
+    <p class="step-num">STEP 05</p>
+    <h2>파일 불러오기 인터페이스</h2>
+    <p>경로를 코드에 박지 않고, 사용자가 직접 FBX를 골라 읽게 한다.</p>
+    <p class="muted small">버튼 선택 · 드래그&드롭 · 캐릭터/애니메이션 자동 인식</p>
+  </section>
+  <section>
+    <h3>핵심 개념</h3>
+    <ol class="small" style="text-align:left">
+      <li>서버 URL이 아니므로 <code>load()</code> 대신 <code>FileReader</code> → <code>loader.parse()</code></li>
+      <li><strong>자동 분류</strong>: 스킨 메시가 있으면 캐릭터, 없으면 애니메이션</li>
+      <li>불러온 클립을 보관 → 캐릭터를 바꿔도 다시 적용</li>
+      <li>모델 크기가 제각각 → <strong>카메라 자동 맞춤</strong></li>
+    </ol>
+    <pre><code data-trim data-noescape class="language-javascript">
+const reader = new FileReader();
+reader.onload = (e) => {
+  const obj = loader.parse(e.target.result, ''); // ArrayBuffer → 3D 객체
+  obj.traverse(o => { if (o.isSkinnedMesh) isCharacter = true; });
+};
+reader.readAsArrayBuffer(file);
+    </code></pre>
+    <p><a href="./examples/05-file-loader.html" target="_blank">▶ 실습 5 실행</a></p>
+  </section>
+</section>
+
+<!-- ========== GLB 변환 ========== -->
+<section>
+  <section data-background-gradient="linear-gradient(135deg,#2e2416,#180f08)">
+    <h2>왜 glTF/GLB로 변환하나</h2>
+    <p class="lead">FBX는 웹 배포에 무겁다</p>
+    <p class="small muted">이 강의에서 실제로 변환한 결과 ↓</p>
+    <table>
+      <tr><th></th><th>FBX</th><th>GLB</th></tr>
+      <tr><td>character</td><td>49 MB</td><td class="lead">29 MB</td></tr>
+      <tr><td>walk_ani</td><td>34 MB</td><td>29 MB</td></tr>
+      <tr><td><strong>합계</strong></td><td>83 MB</td><td class="lead">58 MB (−30%)</td></tr>
+    </table>
+    <p class="muted small">모캡 애니메이션은 프레임마다 값이 달라 더 줄이려면 meshopt/Draco 압축 필요</p>
+  </section>
+  <section>
+    <h3>FBX vs glTF/GLB</h3>
+    <table>
+      <tr><th></th><th>FBX</th><th>glTF / GLB</th></tr>
+      <tr><td>표준</td><td>Autodesk 독점</td><td class="lead">웹 개방 표준(Khronos)</td></tr>
+      <tr><td>용량</td><td>큼</td><td>작음 (압축 가능)</td></tr>
+      <tr><td>로딩</td><td>느림·무거운 파서</td><td>빠름 (브라우저 친화)</td></tr>
+      <tr><td>별칭</td><td>—</td><td>"웹의 JPEG" 라 불림</td></tr>
+    </table>
+    <p class="small muted">GLB = glTF(장면·애니메이션) + 텍스처를 <u>한 파일</u>로 묶은 바이너리 형식</p>
+  </section>
+  <section>
+    <h3>변환 방법 (이 강의에서 실제 사용)</h3>
+    <div class="box small">
+      <p><strong>① fbx2gltf (npm) </strong> — 설치 후 짧은 스크립트로 변환</p>
+      <pre><code data-trim class="language-javascript">// npm i fbx2gltf  후 실행
+const convert = require('fbx2gltf');
+convert('fbx/character.fbx', 'glb/character.glb', ['--binary'])
+  .then(out => console.log('완료:', out));
+    </code></pre>
+    </div>
+    <div class="box small" style="margin-top:10px">
+      <p><strong>② Blender</strong> — FBX Import → glTF 2.0(.glb) Export (GUI, 무료)</p>
+      <p><strong>③ gltf-transform</strong>로 추가 최적화 (더 줄이려면 meshopt/Draco)</p>
+      <pre><code data-trim class="language-powershell">npx @gltf-transform/cli optimize in.glb out.glb --compress meshopt</code></pre>
+    </div>
+    <p class="prompt small">"FBX를 웹용 GLB로 변환하는 방법을 알려줘. Windows에 Blender가 없을 때 npm으로 하는 법도."</p>
+  </section>
+  <section>
+    <h3>코드에서 GLB 쓰기</h3>
+    <p class="small">FBXLoader 대신 <strong>GLTFLoader</strong> 사용 — 사용법은 거의 동일</p>
+    <pre><code data-trim data-noescape class="language-javascript">
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const loader = new GLTFLoader();
+loader.load('../glb/character.glb', (gltf) => {
+  scene.add(gltf.scene);                              // 캐릭터
+  const mixer = new THREE.AnimationMixer(gltf.scene);
+  // 애니메이션은 gltf.animations 배열에 들어 있다
+  mixer.clipAction(gltf.animations[0]).play();
+});
+    </code></pre>
+    <p class="muted small">캐릭터·애니메이션을 한 GLB로 합치거나, 파일을 나눠 관리할 수도 있다.</p>
+  </section>
+</section>
+
+<!-- ========== 배포 ========== -->
+<section>
+  <section data-background-gradient="linear-gradient(135deg,#1a2e1a,#0a180a)">
+    <h2>GitHub으로 공개하기</h2>
+    <p class="lead">서버도, 비용도 없이 인터넷에 서비스</p>
+    <p class="muted small">이 강의 저장소: <a href="https://github.com/dknife/DeptTalk2026" target="_blank">github.com/dknife/DeptTalk2026</a></p>
+  </section>
+
+  <!-- GitHub 개념 -->
+  <section>
+    <h3>GitHub이란?</h3>
+    <div class="box small">
+      <p><strong>Git</strong> = 코드의 <u>버전 관리</u> 도구. 언제 무엇을 바꿨는지 기록·되돌리기.</p>
+      <p><strong>GitHub</strong> = 그 코드를 <u>인터넷에 저장·공유</u>하는 공간(클라우드 저장소).</p>
+    </div>
+    <ul class="small" style="text-align:left; margin-top:14px">
+      <li><strong>Repository(저장소)</strong> — 프로젝트 하나가 담기는 폴더</li>
+      <li><strong>Commit</strong> — "이 시점의 상태"를 저장한 스냅샷</li>
+      <li><strong>Push</strong> — 내 컴퓨터의 커밋을 GitHub로 올리기</li>
+    </ul>
+    <p class="muted small">비유: 구글 드라이브 + '되돌리기 기록'이 붙은 코드 전용 창고</p>
+  </section>
+
+  <!-- Pages 개념 -->
+  <section>
+    <h3>GitHub Pages란?</h3>
+    <div class="box small">
+      저장소에 올린 <strong>HTML/CSS/JS 파일을 그대로 웹사이트로 무료 배포</strong>해 주는 기능.
+      별도 서버·도메인·비용이 필요 없다.
+    </div>
+    <ul class="small" style="text-align:left; margin-top:14px">
+      <li>저장소의 파일이 곧 웹페이지가 된다 (정적 호스팅)</li>
+      <li>주소 규칙: <code>https://&lt;아이디&gt;.github.io/&lt;저장소&gt;/</code></li>
+      <li>Push 하면 <u>자동으로</u> 사이트가 갱신된다</li>
+    </ul>
+    <p class="muted small">우리 서비스는 순수 HTML+Three.js(정적)라 Pages에 완벽히 맞다.</p>
+  </section>
+
+  <section>
+    <h3>① 코드 올리기 (Push)</h3>
+    <pre><code data-trim class="language-powershell">
+git init
+git add .
+git commit -m "FBX 3D 웹서비스"
+git branch -M main
+git remote add origin https://github.com/dknife/DeptTalk2026.git
+git push -u origin main
+    </code></pre>
+    <p class="muted small">처음 push 시 GitHub 로그인(브라우저 인증) 창이 뜬다.
+    Git이 낯설면: 저장소 → <em>Add file → Upload files</em> 드래그 업로드도 가능.</p>
+  </section>
+  <section>
+    <h3>② Pages 켜기</h3>
+    <ol class="small" style="text-align:left">
+      <li>저장소 <strong>DeptTalk2026 → Settings → Pages</strong></li>
+      <li>Source: <em>Deploy from a branch</em> → <code>main</code> / <code>/(root)</code> → Save</li>
+      <li>1~2분 뒤 공개 주소 생성 ↓</li>
+    </ol>
+    <div class="box small">
+      <p>🎞 슬라이드: <code>https://dknife.github.io/DeptTalk2026/</code></p>
+      <p>🕹 실습: <code>https://dknife.github.io/DeptTalk2026/examples/</code></p>
+    </div>
+  </section>
+  <section>
+    <h3>배포 검증 포인트</h3>
+    <ul class="check small">
+      <li><strong>경로 대소문자</strong> — GitHub은 구분함 (<code>Fbx</code> ≠ <code>fbx</code>)</li>
+      <li><strong>상대경로</strong> — <code>../fbx/...</code> 가 실제 구조와 맞는지</li>
+      <li><strong>모델 용량</strong> — 너무 크면 로딩이 느림</li>
+      <li>공개 주소로 접속해 로컬과 동일하게 동작하는지</li>
+    </ul>
+    <p class="prompt small" style="margin-top:16px">"GitHub Pages에서 모델 파일 404가 떠. 로컬에선 됐어. 원인 후보를 알려줘."</p>
+  </section>
+</section>
+
+<!-- ========== 마무리 ========== -->
+<section>
+  <section>
+    <h2>마무리 — 무엇을 배웠나</h2>
+    <ol style="text-align:left">
+      <li>목표를 <span class="lead">4단계로 분해</span>했다</li>
+      <li>각 단계를 <span class="lead">AI에게 맥락과 함께 요청</span>했다</li>
+      <li>결과를 <span class="lead">체크리스트로 검증</span>했다</li>
+      <li>안 되면 <span class="lead">오류를 근거로 다시 요청</span>했다</li>
+      <li><span class="lead">GitHub Pages로 공개</span>했다</li>
+    </ol>
+  </section>
+  <section>
+    <h2>강의 결론</h2>
+    <p>AI 시대의 핵심 능력은 코드 암기가 아니라</p>
+    <p class="lead" style="font-size:1.2em">쪼개고 · 잘 요청하고 · 검증하고 · 반복 개선하기</p>
+    <p class="small muted">이 4가지는 3D 뷰어뿐 아니라 <u>모든 AI 협업 프로젝트</u>에 그대로 적용된다.</p>
+  </section>
+  <section>
+    <h3>더 나아가기 (과제)</h3>
+    <ul class="small" style="text-align:left">
+      <li>배경·조명·바닥 바꾸는 옵션 추가</li>
+      <li>두 동작을 섞는 <strong>블렌딩</strong> 슬라이더</li>
+      <li>FBX를 <strong>GLB로 변환</strong>해 로딩 속도 개선 (GLTFLoader로 교체)</li>
+      <li>모바일 반응형 UI</li>
+    </ul>
+    <p class="lead" style="margin-top:20px">각 과제를 "말로 표현 → AI에 요청 → 검증" 사이클로!</p>
+  </section>
+  <section data-background-gradient="linear-gradient(135deg,#1a2a3a,#0d1520)">
+    <h1>감사합니다</h1>
+    <p class="muted">실습: <a href="./examples/01-basic-scene.html" target="_blank">01</a> ·
+      <a href="./examples/02-load-character.html" target="_blank">02</a> ·
+      <a href="./examples/03-apply-animation.html" target="_blank">03</a> ·
+      <a href="./examples/04-full-controls.html" target="_blank">04</a> ·
+      <a href="./examples/05-file-loader.html" target="_blank">05</a></p>
+  </section>
+</section>
+
+</div>
+</div>
+
+<!-- reveal.js 스크립트 -->
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'slide',
+    plugins: [ RevealHighlight, RevealNotes ],
+  });
+</script>
+</body>
+</html>

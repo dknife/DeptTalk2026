@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>실습 3 · 애니메이션 입히기</title>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    #info {
+      position: absolute; top: 10px; left: 10px; color: #fff;
+      background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 6px;
+      font-size: 13px; line-height: 1.5;
+    }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="info">실습 3 · 별도 FBX의 애니메이션을 캐릭터에 입히기<br /><span id="status">로딩 중…</span></div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+    const status = document.getElementById('status');
+
+    // ── 기본 씬 ──
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x2b2b33);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 120, 320);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+    dirLight.position.set(100, 200, 100);
+    scene.add(dirLight);
+    scene.add(new THREE.GridHelper(400, 20, 0x888888, 0x444444));
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 100, 0);
+    controls.enableDamping = true;
+
+    // [핵심 개념]
+    // 애니메이션 재생에는 AnimationMixer가 필요하다.
+    //  - Mixer는 "어떤 캐릭터의 뼈를, 시간에 따라 어떻게 움직일지"를 관리하는 재생기.
+    //  - clock.getDelta()로 매 프레임 흐른 시간을 Mixer에 알려줘야 애니메이션이 진행된다.
+    const clock = new THREE.Clock();
+    let mixer = null;
+
+    const loader = new FBXLoader();
+
+    // ── 1단계: 캐릭터(뼈대 + 메시)를 먼저 불러온다 ──
+    loader.load('../fbx/character.fbx', (character) => {
+      scene.add(character);
+
+      // 이 캐릭터를 대상으로 하는 Mixer 생성
+      mixer = new THREE.AnimationMixer(character);
+
+      // ── 2단계: 애니메이션만 담긴 별도 FBX를 불러온다 ──
+      // 이 FBX 안의 animations[0] 이 우리가 원하는 '동작 데이터(AnimationClip)'.
+      loader.load('../fbx/walk_ani.fbx', (anim) => {
+        const clip = anim.animations[0]; // 첫 번째 애니메이션 클립
+
+        // ── 3단계: 클립을 캐릭터 Mixer에 연결하고 재생 ──
+        // 애니메이션 FBX와 캐릭터의 '뼈 이름'이 같아야 정상 적용된다.
+        // (Mixamo 계열은 뼈 이름 규칙이 동일해 그대로 맞는다.)
+        const action = mixer.clipAction(clip);
+        action.play();
+
+        status.textContent = `애니메이션 재생 중 ✓  (클립: "${clip.name}")`;
+      }, undefined, (err) => {
+        console.error(err);
+        status.textContent = '⚠ animation.fbx 로드 실패';
+      });
+    }, undefined, (err) => {
+      console.error(err);
+      status.textContent = '⚠ character.fbx 로드 실패 (로컬 서버·경로 확인)';
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      if (mixer) mixer.update(delta); // ← 이 한 줄이 애니메이션을 '진행'시킨다.
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>

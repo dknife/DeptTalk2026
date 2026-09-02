@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>실습 4 · 제어 UI 완성</title>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: sans-serif; background: #2b2b33; }
+    #panel {
+      position: absolute; left: 12px; bottom: 12px;
+      background: rgba(20,20,26,0.85); color: #eee; padding: 14px 16px;
+      border-radius: 10px; font-size: 13px; width: 260px; backdrop-filter: blur(4px);
+    }
+    #panel h3 { margin: 0 0 10px; font-size: 14px; }
+    .row { margin: 8px 0; }
+    .clips button {
+      margin: 2px 4px 2px 0; padding: 5px 10px; border: 0; border-radius: 6px;
+      background: #3a3a46; color: #eee; cursor: pointer; font-size: 12px;
+    }
+    .clips button.active { background: #4f9dde; color: #fff; }
+    label { display: block; margin-bottom: 3px; color: #aaa; }
+    input[type=range] { width: 100%; }
+    #playBtn { width: 100%; padding: 8px; border: 0; border-radius: 6px; cursor: pointer;
+      background: #4f9dde; color: #fff; font-size: 13px; font-weight: bold; }
+    #status { position: absolute; top: 10px; left: 12px; color: #fff;
+      background: rgba(0,0,0,0.5); padding: 6px 10px; border-radius: 6px; font-size: 12px; }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="status">로딩 중…</div>
+
+  <div id="panel">
+    <h3>애니메이션 제어</h3>
+    <div class="row clips" id="clips"><!-- 애니메이션 버튼이 동적으로 채워짐 --></div>
+    <div class="row">
+      <button id="playBtn">⏸ 일시정지</button>
+    </div>
+    <div class="row">
+      <label>재생 속도 <span id="speedVal">1.0×</span></label>
+      <input type="range" id="speed" min="0" max="2" step="0.05" value="1" />
+    </div>
+    <div class="row">
+      <label>타임라인</label>
+      <input type="range" id="timeline" min="0" max="1" step="0.001" value="0" />
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+    const status = document.getElementById('status');
+
+    // ── 불러올 애니메이션 목록 ──
+    // 파일을 추가하면 버튼도 자동으로 늘어난다. (Mixamo에서 여러 동작을 받아 넣어보세요.)
+    const ANIMATION_FILES = [
+      { name: '걷기',   file: '../fbx/walk_ani.fbx' },
+      // { name: '뛰기', file: '../fbx/run.fbx' },
+      // { name: '점프', file: '../fbx/jump.fbx' },
+    ];
+
+    // ── 기본 씬 ──
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x2b2b33);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 120, 320);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+    dirLight.position.set(100, 200, 100);
+    scene.add(dirLight);
+    scene.add(new THREE.GridHelper(400, 20, 0x888888, 0x444444));
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 100, 0);
+    controls.enableDamping = true;
+
+    const clock = new THREE.Clock();
+    let mixer = null;
+    const actions = [];       // 각 애니메이션의 AnimationAction
+    let current = null;       // 현재 재생 중인 action
+    let isPlaying = true;
+
+    const loader = new FBXLoader();
+
+    loader.load('../fbx/character.fbx', (character) => {
+      scene.add(character);
+      mixer = new THREE.AnimationMixer(character);
+
+      // 여러 애니메이션 FBX를 순서대로 불러와 action으로 만든다.
+      let loaded = 0;
+      ANIMATION_FILES.forEach((entry, i) => {
+        loader.load(entry.file, (anim) => {
+          const clip = anim.animations[0];
+          clip.name = entry.name;
+          const action = mixer.clipAction(clip);
+          actions[i] = action;
+
+          loaded++;
+          if (loaded === ANIMATION_FILES.length) setupUI();
+        }, undefined, (e) => { console.error(e); status.textContent = `⚠ ${entry.file} 로드 실패`; });
+      });
+    }, undefined, (e) => { console.error(e); status.textContent = '⚠ character.fbx 로드 실패'; });
+
+    // ─────────────────────────────────────────────
+    // 제어 UI 구성
+    // ─────────────────────────────────────────────
+    const clipsEl = document.getElementById('clips');
+    const playBtn = document.getElementById('playBtn');
+    const speedEl = document.getElementById('speed');
+    const speedVal = document.getElementById('speedVal');
+    const timelineEl = document.getElementById('timeline');
+
+    function setupUI() {
+      // 애니메이션 전환 버튼
+      ANIMATION_FILES.forEach((entry, i) => {
+        const btn = document.createElement('button');
+        btn.textContent = entry.name;
+        btn.onclick = () => switchTo(i);
+        clipsEl.appendChild(btn);
+      });
+      switchTo(0); // 첫 애니메이션 재생
+      status.textContent = '준비 완료 ✓';
+    }
+
+    // 애니메이션 전환 — 부드럽게 크로스페이드(0.4초)
+    function switchTo(index) {
+      const next = actions[index];
+      if (!next || next === current) return;
+
+      next.reset();
+      next.setEffectiveTimeScale(parseFloat(speedEl.value));
+      next.play();
+
+      if (current) {
+        current.crossFadeTo(next, 0.4, false); // 이전 동작 → 새 동작으로 서서히 전환
+      }
+      current = next;
+
+      // 버튼 활성화 표시
+      [...clipsEl.children].forEach((b, i) => b.classList.toggle('active', i === index));
+    }
+
+    // 재생 / 일시정지
+    playBtn.onclick = () => {
+      isPlaying = !isPlaying;
+      playBtn.textContent = isPlaying ? '⏸ 일시정지' : '▶ 재생';
+    };
+
+    // 재생 속도
+    speedEl.oninput = () => {
+      const v = parseFloat(speedEl.value);
+      speedVal.textContent = v.toFixed(2) + '×';
+      if (current) current.setEffectiveTimeScale(v);
+    };
+
+    // 타임라인 스크럽 — 드래그하면 해당 시점으로 이동
+    let scrubbing = false;
+    timelineEl.addEventListener('pointerdown', () => (scrubbing = true));
+    timelineEl.addEventListener('pointerup', () => (scrubbing = false));
+    timelineEl.oninput = () => {
+      if (current) {
+        const dur = current.getClip().duration;
+        current.time = parseFloat(timelineEl.value) * dur;
+      }
+    };
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      // 일시정지 상태이거나 사용자가 타임라인을 잡고 있으면 시간을 진행하지 않는다.
+      if (mixer && isPlaying && !scrubbing) mixer.update(delta);
+
+      // 타임라인 슬라이더를 현재 재생 위치에 맞춰 갱신
+      if (current && !scrubbing) {
+        const dur = current.getClip().duration;
+        timelineEl.value = (current.time % dur) / dur;
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>실습 예제 모음 · FBX 3D 웹서비스</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; font-family: 'Malgun Gothic','맑은 고딕',sans-serif;
+      background: linear-gradient(135deg,#12202e,#0a1018); color: #e8eef5;
+      display: flex; flex-direction: column; align-items: center; padding: 48px 20px;
+    }
+    h1 { font-size: 28px; margin: 0 0 4px; }
+    .sub { color: #8ca; margin: 0 0 6px; }
+    .sub a { color: #7fd; }
+    .hint { color: #8899aa; font-size: 13px; margin-bottom: 28px; text-align: center; line-height: 1.6; }
+    .list { width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 14px; }
+    .card {
+      display: flex; align-items: center; gap: 16px; text-decoration: none; color: inherit;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      border-left: 4px solid #4f9dde; border-radius: 10px; padding: 16px 18px;
+      transition: .15s;
+    }
+    .card:hover { background: rgba(79,157,222,0.15); transform: translateX(4px); }
+    .num {
+      flex: 0 0 44px; height: 44px; border-radius: 50%; background: #4f9dde; color: #fff;
+      display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px;
+    }
+    .body h2 { margin: 0 0 3px; font-size: 17px; color: #cfe6ff; }
+    .body p { margin: 0; font-size: 13px; color: #aab6c4; }
+    .go { margin-left: auto; color: #7fd; font-size: 20px; }
+    .foot { margin-top: 30px; font-size: 13px; color: #8899aa; text-align: center; line-height: 1.7; }
+    .foot a { color: #7fd; }
+    .warn {
+      max-width: 640px; width: 100%; margin: 22px 0 0; font-size: 12.5px; color: #ffd9a8;
+      background: rgba(255,157,92,0.12); border-left: 3px solid #ff9d5c; border-radius: 8px; padding: 12px 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎬 FBX 3D 웹서비스 · 실습 예제</h1>
+  <p class="sub"><a href="../index.html">← 강의 프리젠테이션으로 돌아가기</a></p>
+  <p class="hint">아래 순서대로 진행하세요. 각 단계는 이전 단계 위에 기능을 하나씩 쌓아갑니다.</p>
+
+  <div class="list">
+    <a class="card" href="./01-basic-scene.html">
+      <div class="num">1</div>
+      <div class="body">
+        <h2>3D 기본 씬</h2>
+        <p>Scene · Camera · Renderer · Light · OrbitControls (마우스로 회전·확대)</p>
+      </div>
+      <div class="go">▶</div>
+    </a>
+
+    <a class="card" href="./02-load-character.html">
+      <div class="num">2</div>
+      <div class="body">
+        <h2>캐릭터 FBX 불러오기</h2>
+        <p>FBXLoader로 캐릭터를 씬에 세우기 (아직 T자 정지 자세)</p>
+      </div>
+      <div class="go">▶</div>
+    </a>
+
+    <a class="card" href="./03-apply-animation.html">
+      <div class="num">3</div>
+      <div class="body">
+        <h2>애니메이션 입히기</h2>
+        <p>별도 FBX의 동작을 AnimationMixer로 캐릭터에 적용·재생</p>
+      </div>
+      <div class="go">▶</div>
+    </a>
+
+    <a class="card" href="./04-full-controls.html">
+      <div class="num">4</div>
+      <div class="body">
+        <h2>제어 UI 완성</h2>
+        <p>재생/정지 · 애니메이션 전환(크로스페이드) · 속도 · 타임라인</p>
+      </div>
+      <div class="go">▶</div>
+    </a>
+
+    <a class="card" href="./05-file-loader.html">
+      <div class="num">5</div>
+      <div class="body">
+        <h2>파일 불러오기 인터페이스</h2>
+        <p>사용자가 직접 FBX 선택·드래그&드롭 (캐릭터/애니메이션 자동 인식)</p>
+      </div>
+      <div class="go">▶</div>
+    </a>
+  </div>
+
+  <div class="warn">
+    ⚠ 이 예제들은 FBX 파일을 읽기 때문에 <b>로컬 웹 서버</b>에서 실행해야 합니다.
+    (파일을 더블클릭한 <code>file://</code> 방식은 보안정책으로 모델 로딩이 막힙니다.)<br />
+    실행: 프로젝트 폴더에서 <code>python -m http.server 8000</code> 또는 <code>npx serve .</code> →
+    <code>http://localhost:8000/examples/</code> 접속.
+  </div>
+
+  <div class="foot">
+    모델 파일 위치: <code>../fbx/character.fbx</code>, <code>../fbx/walk_ani.fbx</code><br />
+    GLB 변환본: <code>../glb/character.glb</code>, <code>../glb/walk_ani.glb</code>
+  </div>
+</body>
+</html>

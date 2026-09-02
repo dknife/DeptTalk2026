@@ -1,0 +1,13 @@
+# 텍스트 파일은 자동 처리, 바이너리는 절대 변환 금지
+* text=auto
+
+# 3D 모델(바이너리) — 줄바꿈 변환 시 파일이 손상됨
+*.fbx binary
+*.glb binary
+*.gltf binary
+
+# 이미지/기타 바이너리
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.bin binary

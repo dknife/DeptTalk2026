@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>실습 5 · 파일 불러오기 인터페이스</title>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: sans-serif; background: #2b2b33; }
+
+    /* 왼쪽 상단: 파일 불러오기 UI */
+    #loader {
+      position: absolute; top: 12px; left: 12px; z-index: 10;
+      background: rgba(20,20,26,0.85); color: #eee; padding: 14px 16px;
+      border-radius: 10px; font-size: 13px; width: 260px; backdrop-filter: blur(4px);
+    }
+    #loader h3 { margin: 0 0 10px; font-size: 14px; }
+    .fileBtn {
+      display: block; text-align: center; padding: 10px; margin-bottom: 8px;
+      background: #4f9dde; color: #fff; border-radius: 6px; cursor: pointer; font-weight: bold;
+    }
+    .fileBtn:hover { background: #63aef0; }
+    .fileBtn input { display: none; }
+    #drop {
+      border: 2px dashed #556; border-radius: 8px; padding: 14px; text-align: center;
+      color: #99a; font-size: 12px; margin-bottom: 6px; transition: .15s;
+    }
+    #drop.over { border-color: #4f9dde; color: #cfe6ff; background: rgba(79,157,222,0.12); }
+    .loaded { font-size: 11px; color: #8ad0ff; margin-top: 4px; word-break: break-all; }
+
+    /* 왼쪽 하단: 애니메이션 제어 (실습 4와 동일 구조) */
+    #panel {
+      position: absolute; left: 12px; bottom: 12px; z-index: 10;
+      background: rgba(20,20,26,0.85); color: #eee; padding: 14px 16px;
+      border-radius: 10px; font-size: 13px; width: 260px; backdrop-filter: blur(4px);
+    }
+    #panel h3 { margin: 0 0 10px; font-size: 14px; }
+    .row { margin: 8px 0; }
+    .clips button {
+      margin: 2px 4px 2px 0; padding: 5px 10px; border: 0; border-radius: 6px;
+      background: #3a3a46; color: #eee; cursor: pointer; font-size: 12px;
+    }
+    .clips button.active { background: #4f9dde; color: #fff; }
+    label { display: block; margin-bottom: 3px; color: #aaa; }
+    input[type=range] { width: 100%; }
+    #playBtn { width: 100%; padding: 8px; border: 0; border-radius: 6px; cursor: pointer;
+      background: #4f9dde; color: #fff; font-size: 13px; font-weight: bold; }
+    #status {
+      position: absolute; top: 12px; left: 288px; color: #fff;
+      background: rgba(0,0,0,0.5); padding: 6px 10px; border-radius: 6px; font-size: 12px; max-width: 40vw;
+    }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <!-- ── 파일 불러오기 인터페이스 ── -->
+  <div id="loader">
+    <h3>파일 불러오기</h3>
+    <label class="fileBtn">📂 FBX 파일 선택
+      <input type="file" id="fileInput" accept=".fbx" multiple />
+    </label>
+    <div id="drop">여기로 드래그 &amp; 드롭<br /><span style="font-size:10px">캐릭터·애니메이션 자동 인식</span></div>
+    <div class="loaded">캐릭터: <span id="charName">없음</span></div>
+    <div class="loaded">애니메이션: <span id="animCount">0</span>개</div>
+  </div>
+
+  <!-- ── 애니메이션 제어 ── -->
+  <div id="panel">
+    <h3>애니메이션 제어</h3>
+    <div class="row clips" id="clips"><span class="muted" style="color:#889;font-size:11px">애니메이션 파일을 불러오세요</span></div>
+    <div class="row"><button id="playBtn">⏸ 일시정지</button></div>
+    <div class="row">
+      <label>재생 속도 <span id="speedVal">1.0×</span></label>
+      <input type="range" id="speed" min="0" max="2" step="0.05" value="1" />
+    </div>
+    <div class="row">
+      <label>타임라인</label>
+      <input type="range" id="timeline" min="0" max="1" step="0.001" value="0" />
+    </div>
+  </div>
+
+  <div id="status">FBX 파일을 불러오세요. (또는 기본 모델이 자동 로드됩니다)</div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+    const status = document.getElementById('status');
+
+    // ── 기본 씬 ──
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x2b2b33);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 5000);
+    camera.position.set(0, 120, 320);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+    dirLight.position.set(100, 200, 100);
+    scene.add(dirLight);
+    const grid = new THREE.GridHelper(400, 20, 0x888888, 0x444444);
+    scene.add(grid);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 100, 0);
+    controls.enableDamping = true;
+
+    const clock = new THREE.Clock();
+    const loader = new FBXLoader();
+
+    // ── 상태 ──
+    let character = null;             // 현재 캐릭터(Group)
+    let mixer = null;                 // 현재 캐릭터의 재생기
+    const loadedClips = [];           // 불러온 애니메이션 원본: { name, clip }
+    const actions = [];               // 현재 mixer에 연결된 action
+    let current = null;               // 재생 중 action
+    let isPlaying = true;
+
+    // ─────────────────────────────────────────────
+    // 핵심 1) File(로컬 파일) → ArrayBuffer → FBXLoader.parse()
+    //   서버 URL이 아니라 사용자가 고른 파일이므로 load()가 아닌 parse()를 쓴다.
+    // ─────────────────────────────────────────────
+    function readFbx(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try { resolve(loader.parse(e.target.result, '')); }
+          catch (err) { reject(err); }
+        };
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    // 핵심 2) 파일 자동 분류: 스킨 메시가 있으면 '캐릭터', 아니면 '애니메이션'
+    function classify(obj) {
+      let hasSkinnedMesh = false;
+      obj.traverse((o) => { if (o.isSkinnedMesh) hasSkinnedMesh = true; });
+      if (hasSkinnedMesh) return 'character';
+      if (obj.animations && obj.animations.length) return 'animation';
+      return 'unknown';
+    }
+
+    async function handleFiles(fileList) {
+      const files = [...fileList].filter((f) => f.name.toLowerCase().endsWith('.fbx'));
+      for (const file of files) {
+        try {
+          status.textContent = `불러오는 중… ${file.name}`;
+          const obj = await readFbx(file);
+          const kind = classify(obj);
+
+          if (kind === 'character') {
+            setCharacter(obj, file.name);
+          } else if (kind === 'animation') {
+            addAnimation(file.name.replace(/\.fbx$/i, ''), obj.animations[0]);
+          } else {
+            status.textContent = `⚠ ${file.name}: 캐릭터도 애니메이션도 아닌 것 같아요.`;
+          }
+        } catch (err) {
+          console.error(err);
+          status.textContent = `⚠ ${file.name} 읽기 실패 (콘솔 확인)`;
+        }
+      }
+    }
+
+    // ── 캐릭터 교체 ──
+    function setCharacter(obj, name) {
+      // 이전 캐릭터 정리
+      if (character) {
+        scene.remove(character);
+        character.traverse((o) => {
+          if (o.geometry) o.geometry.dispose();
+          if (o.material) [].concat(o.material).forEach((m) => m.dispose());
+        });
+      }
+      character = obj;
+      scene.add(character);
+      mixer = new THREE.AnimationMixer(character);
+
+      // 새 캐릭터에 카메라 자동 맞춤
+      fitCameraToObject(character);
+
+      // 이미 불러둔 애니메이션이 있으면 새 캐릭터에 다시 연결
+      actions.length = 0;
+      current = null;
+      rebuildActions();
+      renderClipButtons();
+
+      document.getElementById('charName').textContent = name || '(이름없음)';
+      status.textContent = loadedClips.length
+        ? `캐릭터 적용 ✓ — 애니메이션 재생 중`
+        : `캐릭터 적용 ✓ — 이제 애니메이션 FBX를 불러오세요`;
+    }
+
+    // ── 애니메이션 추가 ──
+    function addAnimation(name, clip) {
+      if (!clip) return;
+      clip.name = name;
+      loadedClips.push({ name, clip });
+      document.getElementById('animCount').textContent = loadedClips.length;
+
+      if (mixer) {
+        const action = mixer.clipAction(clip);
+        actions.push(action);
+        renderClipButtons();
+        switchTo(actions.length - 1);   // 방금 추가한 것 재생
+        status.textContent = `애니메이션 추가 ✓ — "${name}"`;
+      } else {
+        status.textContent = `애니메이션 "${name}" 저장됨 — 캐릭터를 불러오면 적용됩니다`;
+      }
+    }
+
+    // 저장된 클립들을 현재 mixer의 action으로 다시 만든다 (캐릭터 교체 시)
+    function rebuildActions() {
+      if (!mixer) return;
+      loadedClips.forEach(({ clip }) => actions.push(mixer.clipAction(clip)));
+      if (actions.length) switchTo(0);
+    }
+
+    // ─────────────────────────────────────────────
+    // 카메라 자동 맞춤: 모델 크기/위치가 제각각이어도 화면에 담기게
+    // ─────────────────────────────────────────────
+    function fitCameraToObject(obj) {
+      const box = new THREE.Box3().setFromObject(obj);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z) || 100;
+
+      controls.target.copy(center);
+      const dist = maxDim * 1.8;
+      camera.position.set(center.x, center.y + maxDim * 0.2, center.z + dist);
+      camera.near = maxDim / 100;
+      camera.far = maxDim * 100;
+      camera.updateProjectionMatrix();
+      controls.update();
+
+      // 바닥 그리드도 모델 발밑으로
+      grid.position.y = box.min.y;
+    }
+
+    // ─────────────────────────────────────────────
+    // 제어 UI (실습 4와 동일 로직)
+    // ─────────────────────────────────────────────
+    const clipsEl = document.getElementById('clips');
+    const playBtn = document.getElementById('playBtn');
+    const speedEl = document.getElementById('speed');
+    const speedVal = document.getElementById('speedVal');
+    const timelineEl = document.getElementById('timeline');
+
+    function renderClipButtons() {
+      clipsEl.innerHTML = '';
+      if (!actions.length) {
+        clipsEl.innerHTML = '<span style="color:#889;font-size:11px">애니메이션 파일을 불러오세요</span>';
+        return;
+      }
+      loadedClips.forEach((c, i) => {
+        const btn = document.createElement('button');
+        btn.textContent = c.name;
+        btn.onclick = () => switchTo(i);
+        clipsEl.appendChild(btn);
+      });
+      highlightButton();
+    }
+
+    function switchTo(index) {
+      const next = actions[index];
+      if (!next || next === current) return;
+      next.reset();
+      next.setEffectiveTimeScale(parseFloat(speedEl.value));
+      next.play();
+      if (current) current.crossFadeTo(next, 0.4, false);
+      current = next;
+      highlightButton();
+    }
+
+    function highlightButton() {
+      const idx = actions.indexOf(current);
+      [...clipsEl.children].forEach((b, i) => {
+        if (b.classList) b.classList.toggle('active', i === idx);
+      });
+    }
+
+    playBtn.onclick = () => {
+      isPlaying = !isPlaying;
+      playBtn.textContent = isPlaying ? '⏸ 일시정지' : '▶ 재생';
+    };
+    speedEl.oninput = () => {
+      const v = parseFloat(speedEl.value);
+      speedVal.textContent = v.toFixed(2) + '×';
+      if (current) current.setEffectiveTimeScale(v);
+    };
+    let scrubbing = false;
+    timelineEl.addEventListener('pointerdown', () => (scrubbing = true));
+    timelineEl.addEventListener('pointerup', () => (scrubbing = false));
+    timelineEl.oninput = () => {
+      if (current) current.time = parseFloat(timelineEl.value) * current.getClip().duration;
+    };
+
+    // ── 파일 입력 이벤트 ──
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+      e.target.value = ''; // 같은 파일 다시 선택 가능하도록 초기화
+    });
+
+    // ── 드래그 & 드롭 ──
+    const dropEl = document.getElementById('drop');
+    ['dragenter', 'dragover'].forEach((ev) =>
+      window.addEventListener(ev, (e) => { e.preventDefault(); dropEl.classList.add('over'); }));
+    ['dragleave', 'drop'].forEach((ev) =>
+      window.addEventListener(ev, (e) => { e.preventDefault(); dropEl.classList.remove('over'); }));
+    window.addEventListener('drop', (e) => {
+      if (e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files);
+    });
+
+    // ── 렌더 루프 ──
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      if (mixer && isPlaying && !scrubbing) mixer.update(delta);
+      if (current && !scrubbing) {
+        const dur = current.getClip().duration || 1;
+        timelineEl.value = (current.time % dur) / dur;
+      }
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // ── (편의) 기본 모델 자동 로드 — 파일을 불러오면 즉시 대체됨 ──
+    // 데모가 바로 보이도록 fbx 폴더의 기본 모델을 시도. 없으면 조용히 무시.
+    loader.load('../fbx/character.fbx',
+      (obj) => {
+        if (!character) setCharacter(obj, 'character.fbx (기본)');
+        loader.load('../fbx/walk_ani.fbx',
+          (a) => addAnimation('walk_ani (기본)', a.animations[0]),
+          undefined, () => {});
+      },
+      undefined,
+      () => { status.textContent = 'FBX 파일을 불러오세요. (버튼 또는 드래그 & 드롭)'; }
+    );
+  </script>
+</body>
+</html>
