@@ -143,7 +143,8 @@
     <div class="grid2">
       <div class="box">
         <strong>필요한 것</strong>
-        <p class="small">· 크롬/엣지 브라우저<br />· 코드 편집기(VS Code)<br />· GitHub 계정(무료)<br />· (선택) Python 또는 Node.js</p>
+        <p class="small">· 크롬/엣지 브라우저<br />· 코드 편집기(VS Code)<br />· <strong>Claude Code</strong> (AI 개발 도구)<br />· <strong>GitHub 계정</strong>(무료)<br />· Node.js · Git</p>
+        <p class="muted" style="font-size:0.62em">설치·인증은 다음 슬라이드에서 ↓</p>
       </div>
       <div class="box warn">
         <strong>왜 로컬 서버?</strong>
@@ -167,6 +168,93 @@ npx serve .
     <p class="small" style="margin-top:16px"><a href="https://www.mixamo.com" target="_blank">Mixamo</a>에서 무료로:
     캐릭터는 <strong>T-pose</strong>, 애니메이션은 <strong>Without Skin</strong> 으로 다운로드.</p>
     <p class="muted small">두 FBX의 <u>뼈 이름 규칙이 같아야</u> 애니메이션이 정상 적용됨 (Mixamo끼리는 동일).</p>
+  </section>
+</section>
+
+<!-- ========== 사전 준비: 도구 설치 ========== -->
+<section>
+  <section data-background-gradient="linear-gradient(135deg,#16232e,#0a1118)">
+    <h2>사전 준비 · 도구 설치</h2>
+    <p class="lead">AI로 개발하고 GitHub로 배포하기 위한 준비</p>
+    <p class="muted small">Claude Code · GitHub 계정 · Node.js · Git</p>
+  </section>
+
+  <!-- 도구 한눈에 -->
+  <section>
+    <h3>필요한 도구 한눈에</h3>
+    <table style="font-size:0.66em">
+      <tr><th>도구</th><th>용도</th><th>어디서</th></tr>
+      <tr><td><strong>Claude Code</strong></td><td>AI에게 지시해 개발</td><td>claude.ai/install</td></tr>
+      <tr><td>Node.js</td><td>JS 실행·도구 설치</td><td>nodejs.org (LTS)</td></tr>
+      <tr><td>Git for Windows</td><td>버전관리·업로드</td><td>git-scm.com</td></tr>
+      <tr><td><strong>GitHub 계정</strong></td><td>코드 저장·Pages 배포</td><td>github.com</td></tr>
+      <tr><td>VS Code · 브라우저</td><td>편집 · 실행/확인</td><td>무료</td></tr>
+    </table>
+    <p class="muted small">모두 무료. Windows 11 기준으로 설명.</p>
+  </section>
+
+  <!-- Claude Code 설치 -->
+  <section>
+    <h3>① Claude Code CLI 설치 (Windows)</h3>
+    <div class="box small">
+      <p><strong>방법 A · 네이티브 설치</strong> (권장 · 자동 업데이트) — PowerShell에서:</p>
+      <pre><code data-trim class="language-powershell">irm https://claude.ai/install.ps1 | iex</code></pre>
+    </div>
+    <div class="box small" style="margin-top:8px">
+      <p><strong>방법 B · npm</strong> (Node.js 22+ 필요):</p>
+      <pre><code data-trim class="language-powershell">npm install -g @anthropic-ai/claude-code</code></pre>
+    </div>
+    <p class="small" style="margin-top:8px">설치 확인: <code>claude --version</code></p>
+    <p class="muted small"><strong>Git for Windows</strong>를 함께 설치하면 Bash 도구까지 사용 가능(권장).
+    문제 시 <code>claude doctor</code> 로 진단.</p>
+  </section>
+
+  <!-- Claude Code 인증 & 첫 실행 -->
+  <section>
+    <h3>② Claude Code 로그인 & 시작</h3>
+    <pre><code data-trim class="language-powershell">
+cd C:\내프로젝트\폴더      # 작업할 폴더로 이동
+claude                     # 실행 → 브라우저에서 로그인
+    </code></pre>
+    <ul class="small" style="text-align:left">
+      <li>브라우저가 열리면 <strong>Claude Pro/Max 구독 계정</strong>(또는 Console API 키)으로 로그인</li>
+      <li>로그인 후, 프롬프트에 <u>한국어로 지시</u>를 입력하면 된다</li>
+      <li>재로그인은 세션 안에서 <code>/login</code>, 도움말은 <code>/help</code>, 종료는 <code>/exit</code></li>
+    </ul>
+    <div class="box ai prompt small">첫 지시 예시 — "이 폴더에 캐릭터·애니메이션 FBX를 WebGL로 재생하는 웹서비스를 순수 Three.js로 만들어줘."</div>
+    <p class="muted small">인증정보 저장 위치: <code>%USERPROFILE%\.claude\</code></p>
+  </section>
+
+  <!-- GitHub 계정 만들기 -->
+  <section>
+    <h3>③ GitHub 계정 만들기</h3>
+    <ol class="small" style="text-align:left">
+      <li><a href="https://github.com" target="_blank">github.com</a> → <strong>Sign up</strong> (이메일 · 비밀번호 · 사용자명)</li>
+      <li>이메일 인증 완료</li>
+      <li><strong>무료 플랜</strong>으로 충분 — 공개 저장소 · Pages 배포 모두 무료</li>
+      <li>로그인 후 <strong>New repository</strong>로 저장소 생성 (예: <code>DeptTalk2026</code>, Public)</li>
+    </ol>
+    <div class="box small" style="margin-top:10px">
+      💡 사용자명이 곧 배포 주소가 된다:
+      <code>https://&lt;사용자명&gt;.github.io/&lt;저장소&gt;/</code>
+    </div>
+  </section>
+
+  <!-- GitHub 인증(푸시 권한) -->
+  <section>
+    <h3>④ GitHub 로그인 (push 인증)</h3>
+    <p class="small">내 PC에서 저장소로 <code>push</code> 하려면 인증이 필요하다. 두 가지 방법:</p>
+    <div class="box small">
+      <p><strong>방법 A · GitHub CLI</strong> (가장 쉬움 · 이 강의에서 사용)</p>
+      <pre><code data-trim class="language-powershell">winget install GitHub.cli
+gh auth login          # 브라우저로 로그인 → git 자격증명 자동 설정</code></pre>
+    </div>
+    <div class="box small" style="margin-top:8px">
+      <p><strong>방법 B · 개인 액세스 토큰(PAT)</strong></p>
+      <p style="font-size:0.9em">GitHub → Settings → Developer settings → Personal access tokens → 생성(<code>repo</code> 권한).
+      <code>git push</code> 시 비밀번호 대신 이 토큰을 입력.</p>
+    </div>
+    <p class="muted small">인증을 한 번 해두면 이후 <code>git push</code>만으로 배포가 갱신된다.</p>
   </section>
 </section>
 
